@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aplikasi Nota Percetakan</title>
+<style>
+:root{--navy:#17324d;--blue:#2463a6;--pale:#eef4fa;--line:#d7e0e9;--ink:#1c2733}
+*{box-sizing:border-box}body{margin:0;background:#f2f5f8;color:var(--ink);font:14px Arial,sans-serif}
+header{background:linear-gradient(120deg,#17324d,#2869a8);color:#fff;padding:22px max(20px,calc((100% - 1180px)/2))}
+header h1{margin:0 0 5px;font-size:24px}header p{margin:0;color:#dce9f6}
+main{max-width:1180px;margin:22px auto;padding:0 16px;display:grid;grid-template-columns: minmax(300px, .9fr) minmax(420px,1.1fr);gap:20px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;box-shadow:0 4px 16px #1b36500b}
+h2{font-size:17px;color:var(--navy);margin:0 0 15px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}label{font-size:12px;font-weight:700;color:#526273}
+input,select,textarea{width:100%;border:1px solid #cbd5df;border-radius:7px;padding:10px;font:inherit;background:#fff;color:#172433}textarea{min-height:64px;resize:vertical}
+button{border:0;border-radius:7px;padding:10px 13px;font-weight:700;cursor:pointer}.primary{background:var(--blue);color:white}.secondary{background:#e9f0f7;color:var(--navy)}.danger{background:#fff0f0;color:#b42318}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.items{width:100%;border-collapse:collapse;margin-top:10px}.items th,.items td{border-bottom:1px solid var(--line);padding:8px 5px;text-align:left;vertical-align:middle}.items th{font-size:11px;color:#607080;text-transform:uppercase}.items input{padding:7px;min-width:65px}.items .desc{min-width:110px}.items .num{min-width:75px}.items td:last-child{text-align:right}
+.preview{background:white;border:1px solid var(--line);padding:28px;min-height:650px}.invoice-top{display:flex;justify-content:space-between;gap:20px;border-bottom:3px solid var(--navy);padding-bottom:16px}.brand{font-size:22px;font-weight:800;color:var(--navy)}.muted{color:#687887;font-size:12px;line-height:1.5}.invoice-title{text-align:right}.invoice-title h2{font-size:24px;margin:0 0 5px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:20px 0}.meta strong{display:block;margin-bottom:5px;color:var(--navy)}.preview table{width:100%;border-collapse:collapse;margin:18px 0}.preview th{background:var(--pale);color:var(--navy);font-size:11px;text-align:left}.preview th,.preview td{padding:10px 8px;border-bottom:1px solid var(--line)}.right{text-align:right!important}.totals{width:min(300px,100%);margin-left:auto}.totals div{display:flex;justify-content:space-between;padding:6px 0}.grand{font-size:18px;font-weight:800;border-top:2px solid var(--navy);margin-top:5px;padding-top:10px!important}.stamp{display:inline-block;border:2px solid #16845b;color:#16845b;font-weight:800;letter-spacing:2px;padding:7px 14px;transform:rotate(-5deg);border-radius:5px}.bottom{display:flex;justify-content:space-between;gap:25px;margin-top:35px}.sign{text-align:center;min-width:140px}.sign div{height:55px}.note{background:#f6f9fc;padding:10px;border-radius:6px;margin-top:15px;font-size:12px}
+@media(max-width:900px){main{grid-template-columns:1fr}.preview{min-height:0}}
+@media print{body{background:#fff}.no-print,header,main>.panel{display:none!important}main{display:block;margin:0;padding:0;max-width:none}.preview{border:0;padding:10mm;min-height:0;box-shadow:none}.invoice-top{break-inside:avoid} .preview table{break-inside:auto}.preview tr{break-inside:avoid}}
+@page{size:A4;margin:12mm}
+</style>
+</head>
+<body>
+<header><h1>Aplikasi Nota Percetakan</h1><p>Pemesanan Banner, Brosur, X Banner, dan Y Banner • Cetak atau simpan sebagai PDF</p></header>
+<main>
+<section class="panel no-print">
+<h2>Data Nota & Pemesanan</h2>
+<div class="grid">
+<div class="field full"><label>Nama Percetakan / Usaha</label><input id="business" value="NAMA PERCETAKAN ANDA"></div>
+<div class="field full"><label>Alamat / Telepon</label><input id="businessInfo" placeholder="Alamat usaha • No. telepon"></div>
+<div class="field"><label>Nomor Nota</label><input id="invoiceNo"></div>
+<div class="field"><label>Tanggal</label><input id="date" type="date"></div>
+<div class="field"><label>Nama Pelanggan</label><input id="customer" placeholder="Nama pemesan"></div>
+<div class="field"><label>No. HP</label><input id="phone" placeholder="Nomor telepon"></div>
+<div class="field full"><label>Alamat Pelanggan / Instansi</label><input id="address" placeholder="Alamat pelanggan"></div>
+</div>
+<h2 style="margin-top:22px">Daftar Pesanan</h2>
+<div style="overflow-x:auto">
+<table class="items"><thead><tr><th>Produk</th><th>Spesifikasi</th><th>Qty</th><th>Harga</th><th></th></tr></thead><tbody id="orderRows"></tbody></table>
+</div>
+<div class="actions"><button class="secondary" onclick="addRow()">＋ Tambah Item</button></div>
+<div class="grid" style="margin-top:16px">
+<div class="field"><label>Diskon (Rp)</label><input id="discount" type="number" min="0" value="0"></div>
+<div class="field"><label>DP / Uang Muka (Rp)</label><input id="paid" type="number" min="0" value="0"></div>
+<div class="field"><label>Status Pembayaran</label><select id="status"><option>Belum Lunas</option><option>DP</option><option>Lunas</option></select></div>
+<div class="field"><label>Metode Pembayaran</label><select id="method"><option>Tunai</option><option>Transfer</option><option>QRIS</option><option>Lainnya</option></select></div>
+<div class="field full"><label>Catatan / Tenggat Pengerjaan</label><textarea id="notes" placeholder="Contoh: desain dari pelanggan, selesai tanggal ..."></textarea></div>
+</div>
+<div class="actions">
+<button class="primary" onclick="updatePreview()">Perbarui Nota</button>
+<button class="secondary" onclick="window.print()">Cetak / Simpan PDF</button>
+<button class="secondary" onclick="newInvoice()">Nota Baru</button>
+</div>
+<p class="muted">Untuk mengunduh PDF: klik <b>Cetak / Simpan PDF</b>, lalu pilih tujuan printer <b>Save as PDF / Simpan sebagai PDF</b> pada jendela cetak browser.</p>
+</section>
+
+<section class="preview" id="paper">
+<div class="invoice-top">
+<div><div class="brand" id="pBusiness">NAMA PERCETAKAN ANDA</div><div class="muted" id="pBusinessInfo">Alamat usaha • No. telepon</div></div>
+<div class="invoice-title"><h2>NOTA PEMESANAN</h2><div class="muted">No: <b id="pNo"></b><br>Tanggal: <span id="pDate"></span></div></div>
+</div>
+<div class="meta">
+<div><strong>Kepada:</strong><span id="pCustomer">-</span><div class="muted" id="pAddress"></div><div class="muted" id="pPhone"></div></div>
+<div><strong>Detail Pembayaran:</strong><div class="muted">Status: <b id="pStatus">Belum Lunas</b><br>Metode: <span id="pMethod">Tunai</span></div></div>
+</div>
+<table><thead><tr><th style="width:35px">No</th><th>Produk & Spesifikasi</th><th class="right">Qty</th><th class="right">Harga</th><th class="right">Jumlah</th></tr></thead><tbody id="pRows"></tbody></table>
+<div class="totals">
+<div><span>Subtotal</span><b id="pSubtotal">Rp0</b></div><div><span>Diskon</span><b id="pDiscount">Rp0</b></div><div class="grand"><span>Total</span><span id="pTotal">Rp0</span></div><div><span>DP / Dibayar</span><b id="pPaid">Rp0</b></div><div><span>Sisa</span><b id="pRemaining">Rp0</b></div>
+</div>
+<div class="note"><b>Catatan:</b> <span id="pNotes">-</span></div>
+<div class="bottom"><div id="pStamp"></div><div class="sign"><div></div><b>Hormat Kami,</b><br><span id="pSign">Admin / Kasir</span></div></div>
+<p class="muted" style="text-align:center;margin-top:35px">Terima kasih atas kepercayaan Anda.</p>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const rupiah=n=>'Rp'+Math.round(Number(n)||0).toLocaleString('id-ID');
+let rowCount=0;
+function addRow(type='Banner',spec='',qty=1,price=0){
+ const id=++rowCount,tr=document.createElement('tr');tr.dataset.id=id;
+ tr.innerHTML=`<td><select class="product"><option>Banner</option><option>Brosur</option><option>X Banner</option><option>Y Banner</option><option>Lainnya</option></select></td><td><input class="desc" placeholder="Ukuran / bahan / finishing"></td><td><input class="num qty" type="number" min="1" value="${qty}"></td><td><input class="num price" type="number" min="0" value="${price}"></td><td><button class="danger" title="Hapus item" onclick="this.closest('tr').remove();updatePreview()">×</button></td>`;
+ $('orderRows').appendChild(tr);tr.querySelector('.product').value=type;tr.querySelector('.desc').value=spec;
+ tr.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',updatePreview));updatePreview();
+}
+function collect(){return [...$('orderRows').rows].map(r=>({product:r.querySelector('.product').value,spec:r.querySelector('.desc').value,qty:Math.max(1,Number(r.querySelector('.qty').value)||1),price:Math.max(0,Number(r.querySelector('.price').value)||0)}))}
+function updatePreview(){
+ $('pBusiness').textContent=$('business').value||'NAMA PERCETAKAN';$('pBusinessInfo').textContent=$('businessInfo').value||'';
+ $('pNo').textContent=$('invoiceNo').value;$('pDate').textContent=$('date').value?new Date($('date').value+'T00:00:00').toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}):'-';
+ $('pCustomer').textContent=$('customer').value||'-';$('pAddress').textContent=$('address').value;$('pPhone').textContent=$('phone').value;
+ $('pStatus').textContent=$('status').value;$('pMethod').textContent=$('method').value;
+ const items=collect();$('pRows').innerHTML='';let subtotal=0;
+ items.forEach((it,i)=>{let sum=it.qty*it.price;subtotal+=sum;let tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td><b>${escapeHtml(it.product)}</b><br><span class="muted">${escapeHtml(it.spec||'-')}</span></td><td class="right">${it.qty}</td><td class="right">${rupiah(it.price)}</td><td class="right">${rupiah(sum)}</td>`;$('pRows').appendChild(tr)});
+ const discount=Math.max(0,Number($('discount').value)||0),total=Math.max(0,subtotal-discount),paid=Math.max(0,Number($('paid').value)||0);
+ $('pSubtotal').textContent=rupiah(subtotal);$('pDiscount').textContent=rupiah(discount);$('pTotal').textContent=rupiah(total);$('pPaid').textContent=rupiah(paid);$('pRemaining').textContent=rupiah(Math.max(0,total-paid));
+ $('pNotes').textContent=$('notes').value||'-';$('pStamp').innerHTML=$('status').value==='Lunas'?'<span class="stamp">LUNAS</span>':'';
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function newInvoice(){if(!confirm('Buat nota baru? Data nota saat ini akan dikosongkan.'))return;
+ ['customer','phone','address','notes'].forEach(id=>$(id).value='');$('discount').value=0;$('paid').value=0;$('status').value='Belum Lunas';$('orderRows').innerHTML='';addRow();$('invoiceNo').value=nextNo();updatePreview()}
+function nextNo(){let d=new Date(),date=d.getFullYear().toString()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');return 'NT-'+date+'-001'}
+['business','businessInfo','invoiceNo','date','customer','phone','address','discount','paid','status','method','notes'].forEach(id=>$(id).addEventListener('input',updatePreview));
+$('date').value=new Date().toISOString().slice(0,10);$('invoiceNo').value=nextNo();addRow();
+</script>
+</body></html>
